@@ -71,6 +71,7 @@
   .success-msg { background: var(--success-light); border: 1px solid #86efac; border-radius: 4px; padding: 0.6rem 1rem; font-size: 12px; color: var(--success); font-family: var(--mono); }
   .override-controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
   .hidden { display: none !important; }
+  [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (max-width: 600px) { main { padding: 1rem 1rem 3rem; } header { padding: 0 1rem; } }
 </style>
 </head>
@@ -165,8 +166,34 @@ let overrides    = [];        // { date, timeSlot, type }
 let overrideMode = 'add';
 let overrideViewDate = new Date();
 
-async function api(params) { const res = await fetch(API + '?' + new URLSearchParams(params)); return res.json(); }
-async function apiPost(body) { const res = await fetch(API, { method: 'POST', body: JSON.stringify(body) }); return res.json(); }
+async function api(params) {
+  try {
+    const res = await fetch(API + '?' + new URLSearchParams(params));
+    if (!res.ok) return { error: `Server error (${res.status}). Please try again.` };
+    return await res.json();
+  } catch (e) { return { error: 'Network error — please check your connection and try again.' }; }
+}
+async function apiPost(body) {
+  try {
+    const res = await fetch(API, { method: 'POST', body: JSON.stringify(body) });
+    if (!res.ok) return { error: `Server error (${res.status}). Please try again.` };
+    return await res.json();
+  } catch (e) { return { error: 'Network error — please check your connection and try again.' }; }
+}
+
+// Booking fields originate from the unauthenticated booking endpoint — escape
+// before injecting into innerHTML to prevent stored XSS.
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+// Make a non-button element behave like one for keyboard users.
+function makeClickable(el, handler) {
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.onclick = handler;
+  el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } };
+}
 
 async function init() {
   if (!token) { showError(); return; }
@@ -203,7 +230,7 @@ function buildDayToggles() {
     const chip = document.createElement('div');
     chip.className = 'toggle-chip' + (hasAny ? ' on' : '');
     chip.textContent = day.slice(0,3);
-    chip.onclick = () => toggleDay(i, chip);
+    makeClickable(chip, () => toggleDay(i, chip));
     container.appendChild(chip);
   });
 }
@@ -229,11 +256,11 @@ function buildTimeToggles() {
     chip.className = 'toggle-chip' + (activeDays.length > 0 ? ' on' : '');
     chip.innerHTML = `${t}${activeDays.length ? `<br><span style="font-size:10px;opacity:0.7">${activeDays.join(' ')}</span>` : ''}`;
     chip.style.textAlign = 'center';
-    chip.onclick = () => {
+    makeClickable(chip, () => {
       const allOn = DAYS_OF_WEEK.every((_, i) => recurring.has(`${i}|${t}`));
       DAYS_OF_WEEK.forEach((_, i) => { if (allOn) recurring.delete(`${i}|${t}`); else recurring.add(`${i}|${t}`); });
       buildDayToggles(); buildTimeToggles();
-    };
+    });
     container.appendChild(chip);
   });
 }
@@ -265,7 +292,7 @@ function buildOverrideCalendar() {
     const cell = document.createElement('div');
     cell.className = 'cal-day' + (cd < today ? ' past' : '') + (cd.getTime() === today.getTime() ? ' today' : '') + (override ? (override.type === 'add' ? ' added' : ' blocked') : '');
     cell.textContent = d;
-    if (cd >= today) cell.onclick = () => toggleOverride(dateStr, cell);
+    if (cd >= today) makeClickable(cell, () => toggleOverride(dateStr, cell));
     grid.appendChild(cell);
   }
 }
@@ -308,11 +335,11 @@ async function loadBookings() {
   list.innerHTML = upcoming.map(b => `
     <div class="booking-row">
       <div class="booking-info">
-        <div class="date-time">${b.date} &middot; ${b.time}</div>
-        <div class="module-name">${b.module}</div>
-        <div class="student">${b.studentName} &middot; ${b.email}</div>
+        <div class="date-time">${escapeHtml(b.date)} &middot; ${escapeHtml(b.time)}</div>
+        <div class="module-name">${escapeHtml(b.module)}</div>
+        <div class="student">${escapeHtml(b.studentName)} &middot; ${escapeHtml(b.email)}</div>
       </div>
-      <span class="status-badge ${b.status === 'Confirmed' ? 'status-confirmed' : 'status-cancelled'}">${b.status}</span>
+      <span class="status-badge ${b.status === 'Confirmed' ? 'status-confirmed' : 'status-cancelled'}">${escapeHtml(b.status)}</span>
     </div>`).join('');
 }
 

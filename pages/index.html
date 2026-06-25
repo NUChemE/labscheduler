@@ -97,6 +97,7 @@
   .confirm-row span:last-child { font-weight: 500; text-align: right; }
   .ref-code { font-family: var(--mono); font-size: 13px; background: var(--accent-light); color: var(--accent); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; letter-spacing: 0.1em; }
   .hidden { display: none !important; }
+  [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (max-width: 600px) {
     main { padding: 1rem 1rem 3rem; }
     .form-grid { grid-template-columns: 1fr; }
@@ -241,19 +242,32 @@ const today  = new Date(); today.setHours(0,0,0,0);
 let state = { module: null, date: null, time: null, slotData: null, step: 1, viewDate: new Date() };
 
 async function api(params) {
-  const url = API + '?' + new URLSearchParams(params);
-  const res = await fetch(url);
-  return res.json();
+  try {
+    const res = await fetch(API + '?' + new URLSearchParams(params));
+    if (!res.ok) return { error: `Server error (${res.status}). Please try again.` };
+    return await res.json();
+  } catch (e) { return { error: 'Network error — please check your connection and try again.' }; }
 }
 
 async function apiPost(body) {
-  const res = await fetch(API, { method: 'POST', body: JSON.stringify(body) });
-  return res.json();
+  try {
+    const res = await fetch(API, { method: 'POST', body: JSON.stringify(body) });
+    if (!res.ok) return { error: `Server error (${res.status}). Please try again.` };
+    return await res.json();
+  } catch (e) { return { error: 'Network error — please check your connection and try again.' }; }
 }
 
 function showView(id) {
   ['view-1','view-2','view-3','view-4','view-confirm','view-cancel'].forEach(v => document.getElementById(v).classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
+}
+
+// Make a non-button element behave like one for keyboard users.
+function makeClickable(el, handler) {
+  el.setAttribute('role', 'button');
+  el.setAttribute('tabindex', '0');
+  el.onclick = handler;
+  el.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); } };
 }
 
 function buildServiceGrid() {
@@ -263,7 +277,7 @@ function buildServiceGrid() {
     const card = document.createElement('div');
     card.className = 'service-card' + (state.module && state.module.id === m.id ? ' selected' : '');
     card.innerHTML = `<span class="service-tag">${m.tag}</span><span class="service-name">${m.name}</span><span class="service-duration">2 hr session</span>`;
-    card.onclick = () => { document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected')); card.classList.add('selected'); state.module = m; document.getElementById('btn-1-next').disabled = false; };
+    makeClickable(card, () => { document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected')); card.classList.add('selected'); state.module = m; document.getElementById('btn-1-next').disabled = false; });
     grid.appendChild(card);
   });
 }
@@ -287,7 +301,7 @@ function buildCalendar() {
     const cell = document.createElement('div');
     cell.className = 'cal-day' + (cd < today ? ' past' : '') + (cd.getTime() === today.getTime() ? ' today' : '') + (state.date && cd.getTime() === state.date.getTime() ? ' selected' : '');
     cell.textContent = d;
-    if (cd >= today) cell.onclick = () => selectDate(new Date(cd));
+    if (cd >= today) makeClickable(cell, () => selectDate(new Date(cd)));
     grid.appendChild(cell);
   }
 }
@@ -304,6 +318,10 @@ async function selectDate(d) {
   const dateStr = d.toISOString().slice(0, 10);
   const data = await api({ action: 'checkAvailability', date: dateStr });
   document.getElementById('time-loading').classList.add('hidden');
+  if (data.error) {
+    document.getElementById('time-grid').innerHTML = `<p style="font-size:13px;color:#991b1b;font-family:var(--mono);">${data.error}</p>`;
+    return;
+  }
   state.slotData = data.slots || {};
   buildTimeSlots();
 }
@@ -324,14 +342,15 @@ function buildTimeSlots() {
     else { const s = 4 - info.count; capLabel = `${s} spot${s !== 1 ? 's' : ''} left`; }
     const supLine = (!unavailable && info.supervisors && info.supervisors.length) ? info.supervisors.join(', ') : '';
     slot.innerHTML = `<span>${t}</span><span class="slot-cap">${capLabel}</span>${supLine ? `<span class="slot-sups">${supLine}</span>` : ''}`;
-    if (!unavailable) slot.onclick = () => { document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected')); slot.classList.add('selected'); state.time = t; document.getElementById('btn-2-next').disabled = false; };
+    if (!unavailable) makeClickable(slot, () => { document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected')); slot.classList.add('selected'); state.time = t; document.getElementById('btn-2-next').disabled = false; });
     grid.appendChild(slot);
   });
   if (!Object.keys(slots).length) grid.innerHTML = '<p style="font-size:13px;color:var(--ink-light);font-family:var(--mono);">No slots available for this date.</p>';
 }
 
+const NEU_EMAIL_RE = /^[^\s@]+@northeastern\.edu$/i;
 function checkForm3() {
-  const ok = document.getElementById('f-first').value.trim() && document.getElementById('f-last').value.trim() && document.getElementById('f-email').value.includes('@northeastern.edu');
+  const ok = document.getElementById('f-first').value.trim() && document.getElementById('f-last').value.trim() && NEU_EMAIL_RE.test(document.getElementById('f-email').value.trim());
   document.getElementById('btn-3-next').disabled = !ok;
 }
 

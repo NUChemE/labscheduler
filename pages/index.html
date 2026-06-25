@@ -1,1 +1,423 @@
-Hello, World!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChemE ID Studio — Book a Session</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #1a1a2e; --ink-mid: #4a4a6a; --ink-light: #8888aa;
+    --surface: #f5f5f0; --white: #ffffff;
+    --accent: #0057b8; --accent-light: #e8f0fb; --accent-mid: #b3cef0;
+    --success: #1a6b3c; --success-light: #e6f4ed;
+    --warn: #7a3c00; --warn-light: #fef3e2;
+    --border: #ddddd8; --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  }
+  body { font-family: var(--sans); background: var(--surface); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+  header { background: var(--ink); color: var(--white); padding: 0 2rem; }
+  .header-inner { max-width: 960px; margin: 0 auto; padding: 1.5rem 0 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.12); }
+  .site-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+  .site-title { font-size: 20px; font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; }
+  .header-meta { max-width: 960px; margin: 0 auto; padding: 0.9rem 0; display: flex; gap: 2rem; align-items: center; font-size: 13px; color: rgba(255,255,255,0.5); font-family: var(--mono); flex-wrap: wrap; }
+  .header-meta span { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: #4caf7d; display: inline-block; }
+  main { max-width: 960px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+  .steps { display: flex; margin-bottom: 2rem; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--white); }
+  .step { flex: 1; padding: 0.75rem 1rem; font-size: 12px; font-family: var(--mono); color: var(--ink-light); display: flex; align-items: center; gap: 8px; border-right: 1px solid var(--border); transition: background 0.2s; }
+  .step:last-child { border-right: none; }
+  .step.active { background: var(--accent-light); color: var(--accent); }
+  .step.done { background: var(--success-light); color: var(--success); }
+  .step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--border); color: var(--ink-mid); font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 500; }
+  .step.active .step-num { background: var(--accent); color: var(--white); }
+  .step.done .step-num { background: var(--success); color: var(--white); }
+  .panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .panel-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .panel-header h2 { font-size: 15px; font-weight: 500; }
+  .panel-header .sub { font-size: 13px; color: var(--ink-light); font-family: var(--mono); }
+  .panel-body { padding: 1.5rem; }
+  .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .service-card { border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.1rem; cursor: pointer; transition: border-color 0.15s, background 0.15s; display: flex; flex-direction: column; gap: 4px; background: var(--white); position: relative; }
+  .service-card:hover { border-color: var(--accent-mid); background: var(--accent-light); }
+  .service-card.selected { border-color: var(--accent); background: var(--accent-light); }
+  .service-card.selected::after { content: '✓'; position: absolute; top: 10px; right: 12px; font-size: 13px; color: var(--accent); font-weight: 500; }
+  .service-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 2px; }
+  .service-name { font-size: 14px; font-weight: 500; line-height: 1.35; color: var(--ink); }
+  .service-duration { font-family: var(--mono); font-size: 12px; color: var(--ink-mid); margin-top: 4px; }
+  .calendar { max-width: 340px; }
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .cal-nav button { background: none; border: 1px solid var(--border); border-radius: 4px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; color: var(--ink-mid); display: flex; align-items: center; justify-content: center; transition: border-color 0.15s, background 0.15s; }
+  .cal-nav button:hover { border-color: var(--accent-mid); background: var(--accent-light); }
+  .cal-month { font-family: var(--mono); font-size: 13px; font-weight: 500; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day-label { font-family: var(--mono); font-size: 11px; color: var(--ink-light); text-align: center; padding-bottom: 6px; letter-spacing: 0.04em; }
+  .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; border-radius: 4px; cursor: pointer; color: var(--ink); transition: background 0.12s; border: 1px solid transparent; }
+  .cal-day:hover:not(.empty):not(.past) { background: var(--accent-light); border-color: var(--accent-mid); }
+  .cal-day.empty { cursor: default; }
+  .cal-day.past { color: var(--border); cursor: default; }
+  .cal-day.today { font-weight: 500; color: var(--accent); }
+  .cal-day.selected { background: var(--accent); color: var(--white) !important; border-color: var(--accent); }
+  .slots-label { font-family: var(--mono); font-size: 12px; color: var(--ink-light); letter-spacing: 0.06em; text-transform: uppercase; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top: 0.5rem; }
+  .time-slot { padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 4px; font-family: var(--mono); font-size: 13px; cursor: pointer; transition: all 0.12s; background: var(--white); color: var(--ink); display: flex; flex-direction: column; gap: 2px; }
+  .time-slot:hover:not(.unavailable) { border-color: var(--accent-mid); background: var(--accent-light); }
+  .time-slot.unavailable { color: var(--ink-light); cursor: not-allowed; background: var(--surface); }
+  .time-slot.selected { background: var(--accent); color: var(--white); border-color: var(--accent); }
+  .time-slot.selected .slot-cap, .time-slot.selected .slot-sups { color: rgba(255,255,255,0.7); }
+  .slot-cap { font-size: 11px; color: var(--ink-light); }
+  .slot-sups { font-size: 11px; color: var(--ink-light); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 12px; font-family: var(--mono); color: var(--ink-mid); letter-spacing: 0.04em; text-transform: uppercase; }
+  input, textarea { font-family: var(--sans); font-size: 14px; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 4px; background: var(--white); color: var(--ink); outline: none; transition: border-color 0.15s; width: 100%; }
+  input:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  .summary-card { background: var(--ink); color: var(--white); border-radius: 6px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .summary-item label { color: rgba(255,255,255,0.4); font-size: 10px; display: block; margin-bottom: 3px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; }
+  .summary-item p { font-size: 14px; font-weight: 500; }
+  .notice { background: var(--warn-light); border: 1px solid #f5c98a; border-radius: 4px; padding: 0.75rem 1rem; font-size: 13px; color: var(--warn); margin-bottom: 1.5rem; font-family: var(--mono); line-height: 1.5; }
+  .loading { text-align: center; padding: 2rem; font-family: var(--mono); font-size: 13px; color: var(--ink-light); }
+  .error-msg { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 4px; padding: 0.75rem 1rem; font-size: 13px; color: #991b1b; margin-bottom: 1rem; font-family: var(--mono); }
+  .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+  .btn { padding: 0.65rem 1.5rem; border-radius: 4px; font-size: 14px; font-weight: 500; cursor: pointer; border: 1px solid transparent; font-family: var(--sans); transition: all 0.15s; }
+  .btn-secondary { background: var(--white); border-color: var(--border); color: var(--ink-mid); }
+  .btn-secondary:hover { border-color: var(--accent-mid); color: var(--accent); }
+  .btn-primary { background: var(--accent); color: var(--white); border-color: var(--accent); }
+  .btn-primary:hover { background: #004a9e; border-color: #004a9e; }
+  .btn-primary:disabled { background: var(--border); border-color: var(--border); color: var(--ink-light); cursor: not-allowed; }
+  .confirm-screen { text-align: center; padding: 3rem 2rem; }
+  .confirm-icon { width: 64px; height: 64px; background: var(--success-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 1.5rem; }
+  .confirm-screen h2 { font-size: 20px; font-weight: 500; margin-bottom: 0.5rem; }
+  .confirm-screen p { color: var(--ink-mid); font-size: 14px; max-width: 420px; margin: 0 auto 2rem; }
+  .confirm-details { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; text-align: left; max-width: 440px; margin: 0 auto 2rem; display: grid; gap: 0.75rem; }
+  .confirm-row { display: flex; justify-content: space-between; font-size: 13px; gap: 1rem; }
+  .confirm-row span:first-child { color: var(--ink-light); font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+  .confirm-row span:last-child { font-weight: 500; text-align: right; }
+  .ref-code { font-family: var(--mono); font-size: 13px; background: var(--accent-light); color: var(--accent); padding: 0.5rem 1rem; border-radius: 4px; display: inline-block; margin-bottom: 1.5rem; letter-spacing: 0.1em; }
+  .hidden { display: none !important; }
+  @media (max-width: 600px) {
+    main { padding: 1rem 1rem 3rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .summary-card { grid-template-columns: 1fr; }
+    .steps { flex-direction: column; }
+    .step { border-right: none; border-bottom: 1px solid var(--border); }
+    .step:last-child { border-bottom: none; }
+    header { padding: 0 1rem; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <p class="site-eyebrow">Northeastern University · Department of Chemical Engineering</p>
+    <h1 class="site-title">ChemE Innovation &amp; Discovery Studio</h1>
+  </div>
+  <div class="header-meta">
+    <span><span class="dot"></span> Accepting bookings</span>
+    <span>2 hr sessions · max 4 students per slot</span>
+    <span>Self-service scheduling</span>
+  </div>
+</header>
+<main>
+  <div class="steps">
+    <div class="step active" id="step-ind-1"><span class="step-num">1</span> Module</div>
+    <div class="step" id="step-ind-2"><span class="step-num">2</span> Date &amp; Time</div>
+    <div class="step" id="step-ind-3"><span class="step-num">3</span> Your info</div>
+    <div class="step" id="step-ind-4"><span class="step-num">4</span> Confirm</div>
+  </div>
+
+  <div id="view-1" class="panel">
+    <div class="panel-header"><h2>Select a module</h2><span class="sub">— choose one for this session</span></div>
+    <div class="panel-body">
+      <div class="service-grid" id="service-grid"></div>
+      <div class="actions"><button class="btn btn-primary" id="btn-1-next" disabled onclick="goTo(2)">Next: Pick a date →</button></div>
+    </div>
+  </div>
+
+  <div id="view-2" class="panel hidden">
+    <div class="panel-header"><h2>Choose a date &amp; time</h2><span class="sub" id="step2-module-label"></span></div>
+    <div class="panel-body">
+      <div class="calendar">
+        <div class="cal-nav">
+          <button onclick="changeMonth(-1)" aria-label="Previous month">&#8592;</button>
+          <span class="cal-month" id="cal-month-label"></span>
+          <button onclick="changeMonth(1)" aria-label="Next month">&#8594;</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div id="time-section" class="hidden">
+        <p class="slots-label">Available times</p>
+        <div id="time-loading" class="loading hidden">Checking availability...</div>
+        <div class="time-grid" id="time-grid"></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="goTo(1)">← Back</button>
+        <button class="btn btn-primary" id="btn-2-next" disabled onclick="goTo(3)">Next: Your info →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-3" class="panel hidden">
+    <div class="panel-header"><h2>Your information</h2><span class="sub">— all fields required</span></div>
+    <div class="panel-body">
+      <div class="notice">⚠ You must be enrolled in the course associated with this module to book lab time. Have your student ID ready on arrival.</div>
+      <div class="form-grid">
+        <div class="form-group"><label for="f-first">First name</label><input type="text" id="f-first" placeholder="Ada" oninput="checkForm3()"></div>
+        <div class="form-group"><label for="f-last">Last name</label><input type="text" id="f-last" placeholder="Lovelace" oninput="checkForm3()"></div>
+        <div class="form-group full"><label for="f-email">Northeastern email</label><input type="email" id="f-email" placeholder="lovelace.a@northeastern.edu" oninput="checkForm3()"></div>
+        <div class="form-group full"><label for="f-notes">Notes for supervisor (optional)</label><textarea id="f-notes"></textarea></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="goTo(2)">← Back</button>
+        <button class="btn btn-primary" id="btn-3-next" disabled onclick="goTo(4)">Review booking →</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-4" class="panel hidden">
+    <div class="panel-header"><h2>Review your booking</h2></div>
+    <div class="panel-body">
+      <div class="summary-card" id="summary-card"></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Name</label><p id="rev-name" style="font-size:14px;padding:0.4rem 0;"></p></div>
+        <div class="form-group"><label>Email</label><p id="rev-email" style="font-size:14px;padding:0.4rem 0;"></p></div>
+      </div>
+      <div id="submit-error" class="error-msg hidden"></div>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="goTo(3)">← Edit</button>
+        <button class="btn btn-primary" id="btn-submit" onclick="submitBooking()">Confirm booking</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-confirm" class="panel hidden">
+    <div class="confirm-screen">
+      <div class="confirm-icon">✓</div>
+      <h2>You're booked</h2>
+      <p>A confirmation has been sent to your Northeastern email. Please arrive 5 minutes early and bring your Husky Card.</p>
+      <div class="ref-code" id="ref-code"></div>
+      <div class="confirm-details" id="confirm-details"></div>
+      <button class="btn btn-secondary" onclick="resetAll()">Book another session</button>
+    </div>
+  </div>
+
+  <div id="view-cancel" class="panel hidden">
+    <div class="panel-header"><h2>Cancel a booking</h2></div>
+    <div class="panel-body">
+      <div class="form-grid">
+        <div class="form-group full"><label for="c-ref">Reference code</label><input type="text" id="c-ref" placeholder="IDS-XXXXX" oninput="document.getElementById('btn-cancel-submit').disabled=!this.value.trim()"></div>
+      </div>
+      <div id="cancel-error" class="error-msg hidden"></div>
+      <div id="cancel-success" class="hidden" style="background:var(--success-light);border:1px solid #86efac;border-radius:4px;padding:0.75rem 1rem;font-size:13px;color:var(--success);font-family:var(--mono);margin-top:1rem;"></div>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="showView('view-1')">← Back to booking</button>
+        <button class="btn btn-primary" id="btn-cancel-submit" disabled onclick="submitCancellation()">Cancel booking</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const API = 'https://script.google.com/a/macros/northeastern.edu/s/AKfycbyKSs4qEOkVYf3FT5jnmQFCrS7F9DQvc-k5gKzwUlBOENwcSXQIb4QBhbDdOv3yldSd/exec';
+
+const MODULES = [
+  { id: 1, tag: 'Measurement', name: 'Measuring Liquids' },
+  { id: 2, tag: 'Measurement', name: 'Measuring Solids & Powders' },
+  { id: 3, tag: 'Safety',      name: 'Spill Response \u2014 Non-hazardous' },
+  { id: 4, tag: 'Safety',      name: 'Spill Response \u2014 Corrosive Solutions' },
+  { id: 5, tag: 'Technique',   name: 'Making Solutions: Hot plates & stir plates' },
+  { id: 6, tag: 'Technique',   name: 'Make a Dilution Series' },
+  { id: 7, tag: 'Analytical',  name: 'UV-vis / Beer\u2013Lambert Law' },
+  { id: 8, tag: 'General',     name: 'General lab time (2 hrs)' },
+];
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS   = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const today  = new Date(); today.setHours(0,0,0,0);
+
+let state = { module: null, date: null, time: null, slotData: null, step: 1, viewDate: new Date() };
+
+async function api(params) {
+  const url = API + '?' + new URLSearchParams(params);
+  const res = await fetch(url);
+  return res.json();
+}
+
+async function apiPost(body) {
+  const res = await fetch(API, { method: 'POST', body: JSON.stringify(body) });
+  return res.json();
+}
+
+function showView(id) {
+  ['view-1','view-2','view-3','view-4','view-confirm','view-cancel'].forEach(v => document.getElementById(v).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function buildServiceGrid() {
+  const grid = document.getElementById('service-grid');
+  grid.innerHTML = '';
+  MODULES.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'service-card' + (state.module && state.module.id === m.id ? ' selected' : '');
+    card.innerHTML = `<span class="service-tag">${m.tag}</span><span class="service-name">${m.name}</span><span class="service-duration">2 hr session</span>`;
+    card.onclick = () => { document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected')); card.classList.add('selected'); state.module = m; document.getElementById('btn-1-next').disabled = false; };
+    grid.appendChild(card);
+  });
+}
+
+function changeMonth(dir) {
+  state.viewDate = new Date(state.viewDate.getFullYear(), state.viewDate.getMonth() + dir, 1);
+  buildCalendar();
+}
+
+function buildCalendar() {
+  const vd = state.viewDate;
+  document.getElementById('cal-month-label').textContent = `${MONTHS[vd.getMonth()]} ${vd.getFullYear()}`;
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  DAYS.forEach(d => { const l = document.createElement('div'); l.className = 'cal-day-label'; l.textContent = d; grid.appendChild(l); });
+  const firstDay = new Date(vd.getFullYear(), vd.getMonth(), 1).getDay();
+  const daysInMonth = new Date(vd.getFullYear(), vd.getMonth() + 1, 0).getDate();
+  for (let i = 0; i < firstDay; i++) { const e = document.createElement('div'); e.className = 'cal-day empty'; grid.appendChild(e); }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cd = new Date(vd.getFullYear(), vd.getMonth(), d); cd.setHours(0,0,0,0);
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' + (cd < today ? ' past' : '') + (cd.getTime() === today.getTime() ? ' today' : '') + (state.date && cd.getTime() === state.date.getTime() ? ' selected' : '');
+    cell.textContent = d;
+    if (cd >= today) cell.onclick = () => selectDate(new Date(cd));
+    grid.appendChild(cell);
+  }
+}
+
+async function selectDate(d) {
+  state.date = d;
+  state.time = null;
+  state.slotData = null;
+  document.getElementById('btn-2-next').disabled = true;
+  buildCalendar();
+  document.getElementById('time-section').classList.remove('hidden');
+  document.getElementById('time-loading').classList.remove('hidden');
+  document.getElementById('time-grid').innerHTML = '';
+  const dateStr = d.toISOString().slice(0, 10);
+  const data = await api({ action: 'checkAvailability', date: dateStr });
+  document.getElementById('time-loading').classList.add('hidden');
+  state.slotData = data.slots || {};
+  buildTimeSlots();
+}
+
+function buildTimeSlots() {
+  const grid = document.getElementById('time-grid');
+  grid.innerHTML = '';
+  const slots = state.slotData || {};
+  Object.entries(slots).forEach(([t, info]) => {
+    const moduleTaken = info.modules && info.modules.includes(String(state.module.id));
+    const unavailable = info.full || moduleTaken || info.noSupervisor;
+    const slot = document.createElement('div');
+    slot.className = 'time-slot' + (unavailable ? ' unavailable' : '') + (state.time === t ? ' selected' : '');
+    let capLabel;
+    if (info.noSupervisor) capLabel = 'No supervisor';
+    else if (moduleTaken) capLabel = 'Module taken';
+    else if (info.full) capLabel = 'Full';
+    else { const s = 4 - info.count; capLabel = `${s} spot${s !== 1 ? 's' : ''} left`; }
+    const supLine = (!unavailable && info.supervisors && info.supervisors.length) ? info.supervisors.join(', ') : '';
+    slot.innerHTML = `<span>${t}</span><span class="slot-cap">${capLabel}</span>${supLine ? `<span class="slot-sups">${supLine}</span>` : ''}`;
+    if (!unavailable) slot.onclick = () => { document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected')); slot.classList.add('selected'); state.time = t; document.getElementById('btn-2-next').disabled = false; };
+    grid.appendChild(slot);
+  });
+  if (!Object.keys(slots).length) grid.innerHTML = '<p style="font-size:13px;color:var(--ink-light);font-family:var(--mono);">No slots available for this date.</p>';
+}
+
+function checkForm3() {
+  const ok = document.getElementById('f-first').value.trim() && document.getElementById('f-last').value.trim() && document.getElementById('f-email').value.includes('@northeastern.edu');
+  document.getElementById('btn-3-next').disabled = !ok;
+}
+
+function formatDate(d) { return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); }
+
+function goTo(step) {
+  ['view-1','view-2','view-3','view-4'].forEach((v, i) => { document.getElementById(v).classList.add('hidden'); const ind = document.getElementById(`step-ind-${i+1}`); ind.classList.remove('active','done'); if (i+1 < step) ind.classList.add('done'); else if (i+1 === step) ind.classList.add('active'); });
+  document.getElementById(`view-${step}`).classList.remove('hidden');
+  state.step = step;
+  if (step === 2) { document.getElementById('step2-module-label').textContent = `— ${state.module.name}`; buildCalendar(); if (state.date && state.slotData) buildTimeSlots(); }
+  if (step === 4) {
+    const info = state.slotData && state.slotData[state.time];
+    const spotsAfter = info ? Math.max(0, 4 - info.count - 1) : '—';
+    document.getElementById('summary-card').innerHTML = `
+      <div class="summary-item"><label>Module</label><p>${state.module.name}</p></div>
+      <div class="summary-item"><label>Category</label><p>${state.module.tag}</p></div>
+      <div class="summary-item"><label>Date</label><p>${formatDate(state.date)}</p></div>
+      <div class="summary-item"><label>Time</label><p>${state.time} &middot; 2 hrs &middot; ${spotsAfter} spot${spotsAfter !== 1 ? 's' : ''} remaining</p></div>`;
+    document.getElementById('rev-name').textContent = `${document.getElementById('f-first').value} ${document.getElementById('f-last').value}`;
+    document.getElementById('rev-email').textContent = document.getElementById('f-email').value;
+    document.getElementById('submit-error').classList.add('hidden');
+  }
+}
+
+async function submitBooking() {
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+  const data = await apiPost({
+    action: 'createBooking',
+    date: state.date.toISOString().slice(0,10),
+    time: state.time,
+    moduleId: state.module.id,
+    moduleName: state.module.name,
+    studentName: `${document.getElementById('f-first').value} ${document.getElementById('f-last').value}`,
+    email: document.getElementById('f-email').value,
+    notes: document.getElementById('f-notes').value,
+  });
+  btn.disabled = false; btn.textContent = 'Confirm booking';
+  if (data.error) { const el = document.getElementById('submit-error'); el.textContent = data.error; el.classList.remove('hidden'); return; }
+  ['view-1','view-2','view-3','view-4'].forEach((v,i) => { document.getElementById(v).classList.add('hidden'); document.getElementById(`step-ind-${i+1}`).classList.remove('active'); document.getElementById(`step-ind-${i+1}`).classList.add('done'); });
+  document.getElementById('view-confirm').classList.remove('hidden');
+  document.getElementById('ref-code').textContent = data.refCode;
+  document.getElementById('confirm-details').innerHTML = `
+    <div class="confirm-row"><span>Module</span><span>${state.module.name}</span></div>
+    <div class="confirm-row"><span>Date</span><span>${formatDate(state.date)}</span></div>
+    <div class="confirm-row"><span>Time</span><span>${state.time} – +2 hrs</span></div>
+    <div class="confirm-row"><span>Student</span><span>${document.getElementById('f-first').value} ${document.getElementById('f-last').value}</span></div>
+    <div class="confirm-row"><span>Email</span><span>${document.getElementById('f-email').value}</span></div>`;
+}
+
+async function submitCancellation() {
+  const ref = document.getElementById('c-ref').value.trim();
+  const btn = document.getElementById('btn-cancel-submit');
+  btn.disabled = true; btn.textContent = 'Cancelling...';
+  const data = await apiPost({ action: 'cancelBooking', refCode: ref, cancelledBy: 'student' });
+  btn.disabled = false; btn.textContent = 'Cancel booking';
+  const errEl = document.getElementById('cancel-error');
+  const okEl  = document.getElementById('cancel-success');
+  if (data.error) { errEl.textContent = data.error; errEl.classList.remove('hidden'); okEl.classList.add('hidden'); return; }
+  errEl.classList.add('hidden');
+  okEl.textContent = `Booking ${ref} has been cancelled. A confirmation email has been sent.`;
+  okEl.classList.remove('hidden');
+}
+
+function resetAll() {
+  state = { module: null, date: null, time: null, slotData: null, step: 1, viewDate: new Date() };
+  ['f-first','f-last','f-email','f-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('time-section').classList.add('hidden');
+  document.getElementById('btn-1-next').disabled = true;
+  document.getElementById('btn-2-next').disabled = true;
+  document.getElementById('btn-3-next').disabled = true;
+  [1,2,3,4].forEach(i => { document.getElementById(`step-ind-${i}`).classList.remove('active','done'); });
+  document.getElementById('step-ind-1').classList.add('active');
+  buildServiceGrid();
+  showView('view-1');
+}
+
+// Check for cancel link (?cancel=1)
+if (new URLSearchParams(location.search).get('cancel') === '1') {
+  showView('view-cancel');
+  const ref = new URLSearchParams(location.search).get('ref');
+  if (ref) { document.getElementById('c-ref').value = ref; document.getElementById('btn-cancel-submit').disabled = false; }
+} else {
+  buildServiceGrid();
+  buildCalendar();
+}
+</script>
+</body>
+</html>

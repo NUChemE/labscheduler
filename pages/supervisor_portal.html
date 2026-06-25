@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChemE ID Studio — Supervisor Portal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #1a1a2e; --ink-mid: #4a4a6a; --ink-light: #8888aa;
+    --surface: #f5f5f0; --white: #ffffff;
+    --accent: #0057b8; --accent-light: #e8f0fb; --accent-mid: #b3cef0;
+    --success: #1a6b3c; --success-light: #e6f4ed;
+    --danger: #991b1b; --danger-light: #fef2f2;
+    --warn: #7a3c00; --warn-light: #fef3e2;
+    --border: #ddddd8; --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+  }
+  body { font-family: var(--sans); background: var(--surface); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+  header { background: var(--ink); color: var(--white); padding: 0 2rem; }
+  .header-inner { max-width: 860px; margin: 0 auto; padding: 1.25rem 0 1rem; border-bottom: 1px solid rgba(255,255,255,0.12); }
+  .site-eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
+  .site-title { font-size: 18px; font-weight: 500; }
+  .header-sub { max-width: 860px; margin: 0 auto; padding: 0.75rem 0; font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.4); display: flex; gap: 1.5rem; flex-wrap: wrap; }
+  .badge-active { display: inline-block; background: var(--success-light); color: var(--success); font-size: 11px; padding: 2px 8px; border-radius: 4px; font-family: var(--mono); }
+  main { max-width: 860px; margin: 0 auto; padding: 2rem 2rem 4rem; display: flex; flex-direction: column; gap: 1.5rem; }
+  .panel { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .panel-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .panel-header h2 { font-size: 14px; font-weight: 500; }
+  .panel-body { padding: 1.25rem; }
+  .section-label { font-family: var(--mono); font-size: 11px; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .toggle-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.25rem; }
+  .toggle-chip { padding: 5px 14px; border: 1px solid var(--border); border-radius: 4px; font-family: var(--mono); font-size: 12px; cursor: pointer; transition: all 0.12s; background: var(--white); color: var(--ink-mid); user-select: none; }
+  .toggle-chip:hover { border-color: var(--accent-mid); }
+  .toggle-chip.on { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+  .save-row { display: flex; justify-content: flex-end; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+  .btn { padding: 0.55rem 1.25rem; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; font-family: var(--sans); transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: var(--white); border-color: var(--accent); }
+  .btn-primary:hover { background: #004a9e; }
+  .btn-primary:disabled { background: var(--border); color: var(--ink-light); cursor: not-allowed; }
+  .btn-secondary { background: var(--white); border-color: var(--border); color: var(--ink-mid); }
+  .btn-secondary:hover { border-color: var(--accent-mid); color: var(--accent); }
+  .btn-danger { background: var(--danger-light); border-color: #fca5a5; color: var(--danger); }
+  .btn-sm { padding: 3px 10px; font-size: 12px; }
+  .cal-nav { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .cal-nav button { background: none; border: 1px solid var(--border); border-radius: 4px; width: 28px; height: 28px; cursor: pointer; font-size: 14px; color: var(--ink-mid); display: flex; align-items: center; justify-content: center; }
+  .cal-month { font-family: var(--mono); font-size: 12px; font-weight: 500; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-day-label { font-family: var(--mono); font-size: 10px; color: var(--ink-light); text-align: center; padding-bottom: 4px; }
+  .cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 12px; border-radius: 4px; cursor: pointer; border: 1px solid transparent; color: var(--ink-mid); transition: all 0.1s; }
+  .cal-day.empty { cursor: default; }
+  .cal-day.past { color: var(--border); cursor: default; }
+  .cal-day.today { border-color: var(--accent-mid); color: var(--accent); }
+  .cal-day:hover:not(.empty):not(.past) { background: var(--surface); }
+  .cal-day.added { background: var(--success-light); color: var(--success); border-color: #86efac; }
+  .cal-day.blocked { background: var(--danger-light); color: var(--danger); border-color: #fca5a5; }
+  .override-legend { display: flex; gap: 12px; font-size: 11px; color: var(--ink-light); margin-top: 8px; font-family: var(--mono); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .booking-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); gap: 10px; }
+  .booking-row:last-child { border-bottom: none; }
+  .booking-info .date-time { font-size: 11px; color: var(--ink-light); font-family: var(--mono); margin-bottom: 2px; }
+  .booking-info .module-name { font-size: 13px; font-weight: 500; }
+  .booking-info .student { font-size: 12px; color: var(--ink-mid); }
+  .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 500; white-space: nowrap; }
+  .status-confirmed { background: var(--accent-light); color: var(--accent); }
+  .status-cancelled { background: var(--danger-light); color: var(--danger); }
+  .loading { text-align: center; padding: 2rem; font-family: var(--mono); font-size: 12px; color: var(--ink-light); }
+  .error-screen { text-align: center; padding: 4rem 2rem; }
+  .error-screen h2 { font-size: 18px; font-weight: 500; margin-bottom: 0.5rem; }
+  .error-screen p { color: var(--ink-mid); font-size: 14px; }
+  .success-msg { background: var(--success-light); border: 1px solid #86efac; border-radius: 4px; padding: 0.6rem 1rem; font-size: 12px; color: var(--success); font-family: var(--mono); }
+  .override-controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .hidden { display: none !important; }
+  @media (max-width: 600px) { main { padding: 1rem 1rem 3rem; } header { padding: 0 1rem; } }
+</style>
+</head>
+<body>
+
+<div id="loading-screen" class="loading" style="padding: 4rem;">Loading your portal...</div>
+<div id="error-screen" class="error-screen hidden">
+  <h2>Invalid link</h2>
+  <p>This supervisor link is invalid or has expired. Please contact the lab administrator.</p>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <div class="header-inner">
+    <p class="site-eyebrow">Northeastern University · ChemE ID Studio</p>
+    <h1 class="site-title">Supervisor portal</h1>
+  </div>
+  <div class="header-sub">
+    <span id="sup-name-display"></span>
+    <span id="sup-email-display"></span>
+    <span class="badge-active">Active</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Weekly recurring availability</h2>
+      <span id="avail-save-status" class="hidden success-msg"></span>
+    </div>
+    <div class="panel-body">
+      <p class="section-label">Days available</p>
+      <div class="toggle-grid" id="day-toggles"></div>
+      <p class="section-label">Time slots</p>
+      <div class="toggle-grid" id="time-toggles"></div>
+      <div class="save-row">
+        <button class="btn btn-primary" onclick="saveAvailability()">Save schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><h2>One-off overrides</h2></div>
+    <div class="panel-body">
+      <p style="font-size:13px;color:var(--ink-mid);margin-bottom:1rem;">Click a date to add or block it outside your regular schedule.</p>
+      <div class="override-controls">
+        <span style="font-size:12px;font-family:var(--mono);color:var(--ink-mid);">Click to toggle:</span>
+        <button class="btn btn-sm" id="override-mode-add" onclick="setOverrideMode('add')" style="background:var(--success-light);border-color:#86efac;color:var(--success);">+ Add day</button>
+        <button class="btn btn-sm" id="override-mode-block" onclick="setOverrideMode('block')">&#x2715; Block day</button>
+      </div>
+      <div class="cal-nav">
+        <button onclick="changeOverrideMonth(-1)">&#8592;</button>
+        <span class="cal-month" id="override-month-label"></span>
+        <button onclick="changeOverrideMonth(1)">&#8594;</button>
+      </div>
+      <div class="cal-grid" id="override-cal"></div>
+      <div class="override-legend">
+        <span><span class="legend-dot" style="background:var(--success-light);border:1px solid #86efac;"></span> Added</span>
+        <span><span class="legend-dot" style="background:var(--danger-light);border:1px solid #fca5a5;"></span> Blocked</span>
+      </div>
+      <div class="save-row">
+        <button class="btn btn-primary" onclick="saveAvailability()">Save overrides</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header"><h2>Upcoming bookings in your slots</h2></div>
+    <div class="panel-body">
+      <div id="bookings-loading" class="loading">Loading bookings...</div>
+      <div id="bookings-list"></div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+const API   = 'https://script.google.com/a/macros/northeastern.edu/s/AKfycbyKSs4qEOkVYf3FT5jnmQFCrS7F9DQvc-k5gKzwUlBOENwcSXQIb4QBhbDdOv3yldSd/exec';
+const token = new URLSearchParams(location.search).get('token');
+
+const DAYS_OF_WEEK  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const TIME_SLOTS    = ['8:00 AM','10:00 AM','12:00 PM','2:00 PM','4:00 PM'];
+const MONTHS        = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS_SHORT    = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const today         = new Date(); today.setHours(0,0,0,0);
+
+let supData      = null;
+let recurring    = new Set(); // "DOW|TIME" e.g. "1|8:00 AM"
+let overrides    = [];        // { date, timeSlot, type }
+let overrideMode = 'add';
+let overrideViewDate = new Date();
+
+async function api(params) { const res = await fetch(API + '?' + new URLSearchParams(params)); return res.json(); }
+async function apiPost(body) { const res = await fetch(API, { method: 'POST', body: JSON.stringify(body) }); return res.json(); }
+
+async function init() {
+  if (!token) { showError(); return; }
+  const data = await api({ action: 'getAvailability', token });
+  if (data.error) { showError(); return; }
+  supData = data.supervisor;
+  document.getElementById('sup-name-display').textContent = supData.name;
+  document.getElementById('sup-email-display').textContent = supData.email;
+
+  // Load recurring
+  (data.recurring || []).forEach(({ dayOfWeek, timeSlot }) => recurring.add(`${dayOfWeek}|${timeSlot}`));
+  // Load overrides
+  overrides = data.overrides || [];
+
+  document.getElementById('loading-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+
+  buildDayToggles();
+  buildTimeToggles();
+  buildOverrideCalendar();
+  loadBookings();
+}
+
+function showError() {
+  document.getElementById('loading-screen').classList.add('hidden');
+  document.getElementById('error-screen').classList.remove('hidden');
+}
+
+function buildDayToggles() {
+  const container = document.getElementById('day-toggles');
+  container.innerHTML = '';
+  DAYS_OF_WEEK.forEach((day, i) => {
+    const hasAny = TIME_SLOTS.some(t => recurring.has(`${i}|${t}`));
+    const chip = document.createElement('div');
+    chip.className = 'toggle-chip' + (hasAny ? ' on' : '');
+    chip.textContent = day.slice(0,3);
+    chip.onclick = () => toggleDay(i, chip);
+    container.appendChild(chip);
+  });
+}
+
+function toggleDay(dow, chip) {
+  const hasAny = TIME_SLOTS.some(t => recurring.has(`${dow}|${t}`));
+  if (hasAny) {
+    TIME_SLOTS.forEach(t => recurring.delete(`${dow}|${t}`));
+    chip.classList.remove('on');
+  } else {
+    TIME_SLOTS.forEach(t => recurring.add(`${dow}|${t}`));
+    chip.classList.add('on');
+  }
+  buildTimeToggles();
+}
+
+function buildTimeToggles() {
+  const container = document.getElementById('time-toggles');
+  container.innerHTML = '';
+  TIME_SLOTS.forEach(t => {
+    const activeDays = DAYS_OF_WEEK.filter((_, i) => recurring.has(`${i}|${t}`)).map(d => d.slice(0,3));
+    const chip = document.createElement('div');
+    chip.className = 'toggle-chip' + (activeDays.length > 0 ? ' on' : '');
+    chip.innerHTML = `${t}${activeDays.length ? `<br><span style="font-size:10px;opacity:0.7">${activeDays.join(' ')}</span>` : ''}`;
+    chip.style.textAlign = 'center';
+    chip.onclick = () => {
+      const allOn = DAYS_OF_WEEK.every((_, i) => recurring.has(`${i}|${t}`));
+      DAYS_OF_WEEK.forEach((_, i) => { if (allOn) recurring.delete(`${i}|${t}`); else recurring.add(`${i}|${t}`); });
+      buildDayToggles(); buildTimeToggles();
+    };
+    container.appendChild(chip);
+  });
+}
+
+function setOverrideMode(mode) {
+  overrideMode = mode;
+  document.getElementById('override-mode-add').style.cssText   = mode === 'add'   ? 'background:var(--success-light);border-color:#86efac;color:var(--success);' : '';
+  document.getElementById('override-mode-block').style.cssText = mode === 'block' ? 'background:var(--danger-light);border-color:#fca5a5;color:var(--danger);' : '';
+}
+
+function changeOverrideMonth(dir) {
+  overrideViewDate = new Date(overrideViewDate.getFullYear(), overrideViewDate.getMonth() + dir, 1);
+  buildOverrideCalendar();
+}
+
+function buildOverrideCalendar() {
+  const vd = overrideViewDate;
+  document.getElementById('override-month-label').textContent = `${MONTHS[vd.getMonth()]} ${vd.getFullYear()}`;
+  const grid = document.getElementById('override-cal');
+  grid.innerHTML = '';
+  DAYS_SHORT.forEach(d => { const l = document.createElement('div'); l.className = 'cal-day-label'; l.textContent = d; grid.appendChild(l); });
+  const firstDay = new Date(vd.getFullYear(), vd.getMonth(), 1).getDay();
+  const daysInMonth = new Date(vd.getFullYear(), vd.getMonth() + 1, 0).getDate();
+  for (let i = 0; i < firstDay; i++) { const e = document.createElement('div'); e.className = 'cal-day empty'; grid.appendChild(e); }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cd = new Date(vd.getFullYear(), vd.getMonth(), d); cd.setHours(0,0,0,0);
+    const dateStr = cd.toISOString().slice(0,10);
+    const override = overrides.find(o => o.date === dateStr);
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' + (cd < today ? ' past' : '') + (cd.getTime() === today.getTime() ? ' today' : '') + (override ? (override.type === 'add' ? ' added' : ' blocked') : '');
+    cell.textContent = d;
+    if (cd >= today) cell.onclick = () => toggleOverride(dateStr, cell);
+    grid.appendChild(cell);
+  }
+}
+
+function toggleOverride(dateStr, cell) {
+  const existing = overrides.find(o => o.date === dateStr);
+  if (existing) {
+    if (existing.type === overrideMode) {
+      overrides = overrides.filter(o => o.date !== dateStr);
+    } else {
+      existing.type = overrideMode;
+    }
+  } else {
+    overrides.push({ date: dateStr, timeSlot: 'ALL', type: overrideMode });
+  }
+  buildOverrideCalendar();
+}
+
+async function saveAvailability() {
+  const recurringArr = [];
+  recurring.forEach(key => { const [dow, timeSlot] = key.split('|'); recurringArr.push({ dayOfWeek: Number(dow), timeSlot }); });
+  const data = await apiPost({ action: 'saveAvailability', token, recurring: recurringArr, overrides });
+  const status = document.getElementById('avail-save-status');
+  if (data.error) { status.textContent = 'Error: ' + data.error; status.style.background = 'var(--danger-light)'; status.style.color = 'var(--danger)'; }
+  else { status.textContent = 'Saved successfully'; status.style.background = ''; status.style.color = ''; }
+  status.classList.remove('hidden');
+  setTimeout(() => status.classList.add('hidden'), 3000);
+}
+
+async function loadBookings() {
+  const data = await api({ action: 'getBookings', supervisorToken: token });
+  document.getElementById('bookings-loading').classList.add('hidden');
+  const list = document.getElementById('bookings-list');
+  if (data.error || !data.bookings || !data.bookings.length) {
+    list.innerHTML = '<p style="font-size:13px;color:var(--ink-light);font-family:var(--mono);">No bookings found.</p>';
+    return;
+  }
+  const upcoming = data.bookings.filter(b => b.date >= today.toISOString().slice(0,10)).slice(0, 20);
+  if (!upcoming.length) { list.innerHTML = '<p style="font-size:13px;color:var(--ink-light);font-family:var(--mono);">No upcoming bookings.</p>'; return; }
+  list.innerHTML = upcoming.map(b => `
+    <div class="booking-row">
+      <div class="booking-info">
+        <div class="date-time">${b.date} &middot; ${b.time}</div>
+        <div class="module-name">${b.module}</div>
+        <div class="student">${b.studentName} &middot; ${b.email}</div>
+      </div>
+      <span class="status-badge ${b.status === 'Confirmed' ? 'status-confirmed' : 'status-cancelled'}">${b.status}</span>
+    </div>`).join('');
+}
+
+init();
+</script>
+</body>
+</html>
